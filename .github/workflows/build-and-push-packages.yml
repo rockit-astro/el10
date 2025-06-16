@@ -1,0 +1,47 @@
+name: Build and Push packages
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      build-cmd:
+        required: true
+        type: string
+      packages:
+        required: true
+        type: string
+      build-deps:
+        required: false
+        type: string
+
+jobs:
+  build-packages:
+    name: Build + Sign + Push
+    runs-on: ubuntu-latest
+    container: rockylinux/rockylinux:10-minimal
+    steps:
+      - name: Install Dependencies
+        run: |
+          microdnf -y install dnf epel-release
+          /usr/bin/crb enable
+          dnf -y install git gpg make rsync tar rpm-build rpm-sign python3-rpm-macros pyproject-rpm-macros python3-devel python3-setuptools python3-wheel ${{ inputs.build-deps }}
+
+      - name: Clone Source Repository
+        uses: actions/checkout@v4
+
+      - name: Package RPMs
+        run: ${{ inputs.build-cmd }}
+
+      - name: Clone Package Repository
+        uses: actions/checkout@v4
+        with:
+          repository: rockit-astro/el10
+          token: ${{ secrets.DEPLOY_TOKEN }}
+          path: packages
+
+      - name: Sign and Push Packages
+        env:
+          RPM_SIGNING_KEY: ${{ secrets.RPM_SIGNING_KEY }}
+        run: packages/sign-and-push-packages.sh ${{ inputs.packages }}

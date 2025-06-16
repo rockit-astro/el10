@@ -1,0 +1,46 @@
+name: Update RPM Repository
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Create RPM Database
+        run: |
+          # Create repo file structure on gh-pages branch
+          git fetch origin
+          git checkout --orphan gh-pages
+          git rm -rf .
+          git checkout master -- Packages RPM-GPG-KEY
+
+          # Create repo metadata
+          sudo apt-get update
+          sudo apt-get install createrepo-c
+          createrepo_c .
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
