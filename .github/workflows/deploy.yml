@@ -35,8 +35,12 @@ jobs:
 
           # Create repo metadata
           sudo apt-get update
-          sudo apt-get install createrepo-c
+          sudo apt-get install createrepo-c dnf-plugins-core
           createrepo_c .
+
+          # Delete old package versions to keep the deploy size reasonable
+          dnf repomanage --oldonly . | xargs rm -f
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
