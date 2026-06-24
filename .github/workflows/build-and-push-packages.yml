@@ -29,13 +29,13 @@ jobs:
           dnf -y install git gpg make rsync tar rpm-build rpm-sign python3-rpm-macros pyproject-rpm-macros python3-devel python3-setuptools python3-wheel systemd ${{ inputs.build-deps }}
 
       - name: Clone Source Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Package RPMs
         run: ${{ inputs.build-cmd }}
 
       - name: Clone Package Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: rockit-astro/el10
           token: ${{ secrets.DEPLOY_TOKEN }}
